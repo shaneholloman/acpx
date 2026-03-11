@@ -99,6 +99,33 @@ test("integration: built-in droid agent resolves to droid exec --output-format a
   });
 });
 
+test("integration: built-in iflow agent resolves to iflow --experimental-acp", async () => {
+  await withTempHome(async (homeDir) => {
+    const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "acpx-integration-cwd-"));
+    const fakeBinDir = await fs.mkdtemp(path.join(os.tmpdir(), "acpx-fake-iflow-"));
+
+    try {
+      await writeFakeIflowAgent(fakeBinDir);
+
+      const result = await runCli(
+        ["--approve-all", "--cwd", cwd, "--format", "quiet", "iflow", "exec", "echo hello"],
+        homeDir,
+        {
+          env: {
+            PATH: `${fakeBinDir}${path.delimiter}${process.env.PATH ?? ""}`,
+          },
+        },
+      );
+
+      assert.equal(result.code, 0, result.stderr);
+      assert.match(result.stdout, /hello/);
+    } finally {
+      await fs.rm(fakeBinDir, { recursive: true, force: true });
+      await fs.rm(cwd, { recursive: true, force: true });
+    }
+  });
+});
+
 test("integration: exec forwards model, allowed-tools, and max-turns in session/new _meta", async () => {
   await withTempHome(async (homeDir) => {
     const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "acpx-integration-cwd-"));
@@ -1585,6 +1612,36 @@ async function writeFakeDroidAgent(binDir: string): Promise<void> {
       "  shift",
       "fi",
       'if [ "$1" = "acp" ]; then',
+      "  shift",
+      "fi",
+      `exec "${process.execPath}" "${MOCK_AGENT_PATH}" "$@"`,
+      "",
+    ].join("\n"),
+    { encoding: "utf8", mode: 0o755 },
+  );
+}
+
+async function writeFakeIflowAgent(binDir: string): Promise<void> {
+  if (process.platform === "win32") {
+    await fs.writeFile(
+      path.join(binDir, "iflow.cmd"),
+      [
+        "@echo off",
+        "setlocal",
+        'if "%~1"=="--experimental-acp" shift',
+        `"${process.execPath}" "${MOCK_AGENT_PATH}" %*`,
+        "",
+      ].join("\r\n"),
+      { encoding: "utf8" },
+    );
+    return;
+  }
+
+  await fs.writeFile(
+    path.join(binDir, "iflow"),
+    [
+      "#!/bin/sh",
+      'if [ "$1" = "--experimental-acp" ]; then',
       "  shift",
       "fi",
       `exec "${process.execPath}" "${MOCK_AGENT_PATH}" "$@"`,

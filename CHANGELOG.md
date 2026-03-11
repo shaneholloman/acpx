@@ -6,6 +6,8 @@ Repo: https://github.com/openclaw/acpx
 
 ### Changes
 
+- Agents/built-ins: add iFlow as a built-in ACP agent and document its built-in command. (#109) Thanks @gandli.
+
 ### Breaking
 
 ### Fixes

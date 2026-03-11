@@ -17,10 +17,10 @@ test("resolveAgentCommand returns raw value for unknown agents", () => {
   assert.equal(resolveAgentCommand("custom-acp-server"), "custom-acp-server");
 });
 
-test("listBuiltInAgents preserves the required built-in example order", () => {
+test("listBuiltInAgents preserves the required example prefix and alphabetical tail", () => {
   const agents = listBuiltInAgents();
   assert.deepEqual(agents, Object.keys(AGENT_REGISTRY));
-  assert.deepEqual(agents, [
+  assert.deepEqual(agents.slice(0, 7), [
     "pi",
     "openclaw",
     "codex",
@@ -28,11 +28,14 @@ test("listBuiltInAgents preserves the required built-in example order", () => {
     "gemini",
     "cursor",
     "copilot",
+  ]);
+  assert.deepEqual(agents.slice(7), [
     "droid",
-    "kimi",
-    "opencode",
-    "kiro",
+    "iflow",
     "kilocode",
+    "kimi",
+    "kiro",
+    "opencode",
     "qwen",
   ]);
 });
