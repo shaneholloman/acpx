@@ -296,6 +296,8 @@ Built-ins:
 | `opencode` | `npx -y opencode-ai acp`                                               | [OpenCode](https://opencode.ai)                                                                                 |
 | `qwen`     | native (`qwen --acp`)                                                  | [Qwen Code](https://github.com/QwenLM/qwen-code)                                                                |
 
+`factory-droid` and `factorydroid` also resolve to the built-in `droid` adapter.
+
 Additional built-in agent docs live in [agents/README.md](agents/README.md).
 
 Use `--agent` as an escape hatch for custom ACP servers:
