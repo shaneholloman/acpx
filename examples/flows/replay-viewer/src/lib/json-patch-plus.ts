@@ -8,6 +8,7 @@ export function applyReplayPatch<TState extends object>(
   let nextDocument = structuredClone(state) as unknown;
 
   for (const op of ops) {
+    assertSafePatchOperation(op);
     if (op.op === "append") {
       applyAppendOperation(nextDocument, op.path, op.value);
       continue;
@@ -132,6 +133,7 @@ function getValueAtPointer(document: unknown, path: string): unknown {
     }
 
     if (current && typeof current === "object") {
+      assertSafeObjectKey(token, path);
       current = (current as Record<string, unknown>)[token];
       continue;
     }
@@ -165,6 +167,7 @@ function setValueAtPointer(document: unknown, path: string, value: unknown): voi
   if (!parent || typeof parent !== "object") {
     throw new Error(`Cannot set value at non-object parent for ${path}`);
   }
+  assertSafeObjectKey(lastToken, path);
   (parent as Record<string, unknown>)[lastToken] = value;
 }
 
@@ -191,6 +194,7 @@ function resolveParentPointer(
     if (!current || typeof current !== "object") {
       throw new Error(`Invalid JSON Pointer parent for ${path}`);
     }
+    assertSafeObjectKey(token, path);
     current = (current as Record<string, unknown>)[token];
   }
 
@@ -205,4 +209,23 @@ function resolveParentPointer(
             .join("/")}`,
     lastToken: tokens.at(-1)!,
   };
+}
+
+function assertSafePatchOperation(op: ReplayJsonPatchOperation): void {
+  assertSafePointer(op.path);
+  if ("from" in op) {
+    assertSafePointer(op.from);
+  }
+}
+
+function assertSafePointer(path: string): void {
+  for (const token of decodePointer(path)) {
+    assertSafeObjectKey(token, path);
+  }
+}
+
+function assertSafeObjectKey(token: string, path: string): void {
+  if (token === "__proto__" || token === "prototype" || token === "constructor") {
+    throw new Error(`Unsafe JSON Pointer key in ${path}`);
+  }
 }
