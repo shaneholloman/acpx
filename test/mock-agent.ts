@@ -591,7 +591,10 @@ class MockAgent implements Agent {
   async prompt(params: PromptRequest): Promise<PromptResponse> {
     const session = this.sessions.get(params.sessionId);
     if (!session) {
-      throw new Error(`Unknown session: ${params.sessionId}`);
+      throw RequestError.internalError(
+        { sessionId: params.sessionId },
+        `Unknown session: ${params.sessionId}`,
+      );
     }
 
     session.pendingPrompt?.abort();
